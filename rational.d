@@ -76,22 +76,29 @@ definition.
 */
 template isIntegerLike(T)
 {
-    enum bool isIntegerLike = is(typeof({
-        T num;
-        num = 2;
-        num <<= 1;
-        num >>= 1;
-        num += num;
-        num *= num;
-        num /= num;
-        num -= num;
-        num %= 2;
-        num %= num;
-        bool foo = num < 2;
-        bool bar = num == 2;
+    static if (is(T == const) || is(T == immutable))
+    {
+        alias isIntegerLike = isIntegerLike!(Unqual!T);
+    }
+    else
+    {
+        enum bool isIntegerLike = is(typeof({
+            T num;
+            num = 2;
+            num <<= 1;
+            num >>= 1;
+            num += num;
+            num *= num;
+            num /= num;
+            num -= num;
+            num %= 2;
+            num %= num;
+            bool foo = num < 2;
+            bool bar = num == 2;
 
-        return num;
-    }));
+            return num;
+        }));
+    }
 }
 
 unittest
@@ -161,7 +168,7 @@ as the type returned by I1.init * I2.init.
 template CommonInteger(I1, I2)
     if (isIntegerLike!I1 && isIntegerLike!I2)
 {
-    alias typeof(I1.init * I2.init) CommonInteger;
+    alias typeof(Unqual!(I1).init * Unqual!(I2).init) CommonInteger;
 }
 
 unittest
@@ -770,6 +777,7 @@ unittest
     assert(f1 == f2);
 
     // Test multiplication.
+    assert((rational(0, 1) * rational(1, 1)) == 0);
     assert(rational(8, 42) * rational(cast(byte) 7, cast(byte) 68)
            == rational(1, 51));
     assert(rational(20_000L, 3_486_784_401U) * rational(3_486_784_401U, 1_000U)
@@ -973,52 +981,43 @@ unittest
 }
 
 
-/// Find the greatest common factor of num1 and num2 using Euclid's Algorithm.
-CommonInteger!(I1, I2) gcf(I1, I2)(I1 num1, I2 num2)
+/// Find the greatest common factor of m and n using Euclid's Algorithm.
+CommonInteger!(I1, I2) gcf(I1, I2)(I1 m, I2 n)
     if (isIntegerLike!I1 && isIntegerLike!I2)
 {
-    num1 = iAbs(num1);
-    num2 = iAbs(num2);
-    if (num2 > num1)
+    static if (is(I1 == const) || is(I1 == immutable) ||
+               is(I2 == const) || is(I2 == immutable))
     {
-        return gcf(num2, num1);
-    }
-    else if (num2 == num1)
-    {
-        typeof(return) ret = num1;
-        return ret;
-    }
-
-    // Work around Bug 4742.
-    static if (is(I1 == I2))
-    {
-        auto remainder = num1 % num2;
+        // Doesn't work with immutable(BigInt).
+        return gcf!(Unqual!I1, Unqual!I2)(m, n);
     }
     else
     {
-        typeof(return) workaround1 = num1;
-        typeof(return) workaround2 = num2;
-        auto remainder = workaround1 % workaround2;
-    }
+        typeof(return) a = iAbs(m);
+        typeof(return) b = iAbs(n);
 
-    if (remainder == 0)
-    {
-        typeof(return) ret = num2;
-        return ret;
+        while (b)
+        {
+            auto t = b;
+            b = a % b;
+            a = t;
+        }
+
+        return a;
     }
-    else
-    {
-        return gcf(num2, remainder);
-    }
-    assert(0);
 }
 
 unittest
 {
+    assert(gcf(0, 0) == 0);
+    assert(gcf(0, 1) == 1);
+    assert(gcf(999, 0) == 999);
+    assert(gcf(to!(immutable(int))(8), to!(const(int))(12)) == 4);
+
     // Values from the Maxima computer algebra system.
-    assert(gcf( BigInt(314_156_535UL), BigInt(27_182_818_284UL)) == BigInt(3));
+    assert(gcf(BigInt(314_156_535UL), BigInt(27_182_818_284UL)) == BigInt(3));
     assert(gcf(8675309, 362436) == 1);
-    assert(gcf( BigInt("8589934596"), BigInt("295147905179352825852")) == 12);
+    assert(gcf(BigInt("8589934596"), BigInt("295147905179352825852")) == 12);
 }
 
 /// Find the least common multiple of num1, num2.
