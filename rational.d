@@ -57,18 +57,18 @@ all of the operations an integer type should support.  Does not check the
 nominal type of $(D T).  In particular, the following must compile:
 
 ---
-T num;
-num = 2;
-num <<= 1;
-num >>= 1;
-num += num;
-num *= num;
-num /= num;
-num -= num;
-num %= 2;
-num %= num;
-bool foo = num < 2;
-bool bar = num == 2;
+T n;
+n = 2;
+n <<= 1;
+n >>= 1;
+n += n;
+n *= n;
+n /= n;
+n -= n;
+n %= 2;
+n %= n;
+bool foo = n < 2;
+bool bar = n == 2;
 ---
 
 All builtin D integers and $(D std.bigint.BigInt) are integer-like by this
@@ -83,20 +83,20 @@ template isIntegerLike(T)
     else
     {
         enum bool isIntegerLike = is(typeof({
-            T num;
-            num = 2;
-            num <<= 1;
-            num >>= 1;
-            num += num;
-            num *= num;
-            num /= num;
-            num -= num;
-            num %= 2;
-            num %= num;
-            bool foo = num < 2;
-            bool bar = num == 2;
+            T n;
+            n = 2;
+            n <<= 1;
+            n >>= 1;
+            n += n;
+            n *= n;
+            n /= n;
+            n -= n;
+            n %= 2;
+            n %= n;
+            bool foo = n < 2;
+            bool bar = n == 2;
 
-            return num;
+            return n;
         }));
     }
 }
@@ -112,18 +112,18 @@ unittest
 private template isRational(T)
 {
     enum bool isRational =
-        is(typeof(T.init.denom)) && is(typeof(T.init.num));
+        is(typeof(T.init.denominator)) && is(typeof(T.init.numerator));
 }
 
 private template CommonRational(R1, R2)
 {
     static if (isRational!R1)
     {
-        alias CommonRational!(typeof(R1.num), R2) CommonRational;
+        alias CommonRational!(typeof(R1.numerator), R2) CommonRational;
     }
     else static if (isRational!R2)
     {
-        alias CommonRational!(R1, typeof(R2.num)) CommonRational;
+        alias CommonRational!(R1, typeof(R2.numerator)) CommonRational;
     }
     else static if (is(CommonInteger!(R1, R2)))
     {
@@ -214,8 +214,8 @@ Rational!(CommonInteger!(I1, I2)) rational(I1, I2)(I1 i1, I2 i2)
         // Don't want to use void initialization b/c BigInts probably use
         // assignment operator, copy c'tor, etc.
         typeof(return) ret;
-        ret.numerator = i1;
-        ret.denominator = i2;
+        ret.num = i1;
+        ret.den = i2;
     }
     ret.simplify();
     return ret;
@@ -243,7 +243,7 @@ struct Rational(Int)
     auto opBinary(string op, Rhs)(Rhs rhs)
         if (op == "*" && is(CommonRational!(Int, Rhs)) && isRational!Rhs)
     {
-        auto ret = CommonRational!(Int, Rhs)(this.num, this.denom);
+        auto ret = CommonRational!(Int, Rhs)(this.numerator, this.denominator);
         return ret *= rhs;
     }
 
@@ -266,16 +266,16 @@ struct Rational(Int)
         /* Cancel common factors first, then multiply.  This prevents
          * overflows and is much more efficient when using BigInts.
          */
-        auto divisor = gcf(this.numerator, rhs.denominator);
-        this.numerator /= divisor;
-        rhs.denominator /= divisor;
+        auto divisor = gcf(this.num, rhs.den);
+        this.num /= divisor;
+        rhs.den /= divisor;
 
-        divisor = gcf(this.denominator, rhs.numerator);
-        this.denominator /= divisor;
-        rhs.numerator /= divisor;
+        divisor = gcf(this.den, rhs.num);
+        this.den /= divisor;
+        rhs.num /= divisor;
 
-        this.numerator *= rhs.numerator;
-        this.denominator *= rhs.denominator;
+        this.num *= rhs.num;
+        this.den *= rhs.den;
 
         /* Don't need to simplify.  Already cancelled common factors before
          * multiplying.
@@ -287,10 +287,10 @@ struct Rational(Int)
     typeof(this) opOpAssign(string op, Rhs)(Rhs rhs)
         if (op == "*" && isIntegerLike!Rhs)
     {
-        auto divisor = gcf(this.denominator, rhs);
-        this.denominator /= divisor;
+        auto divisor = gcf(this.den, rhs);
+        this.den /= divisor;
         rhs /= divisor;
-        this.numerator *= rhs;
+        this.num *= rhs;
 
         /* Don't need to simplify.  Already cancelled common factors before
          * multiplying.
@@ -304,31 +304,31 @@ struct Rational(Int)
         if (op == "/" && is(CommonRational!(Int, Rhs)) && isRational!Rhs)
     {
         // Division = multiply by inverse.
-        swap(rhs.numerator, rhs.denominator);
+        swap(rhs.num, rhs.den);
         return this *= rhs;
     }
 
     typeof(this) opBinary(string op, Rhs)(Rhs rhs)
         if (op == "/" && is(CommonRational!(Int, Rhs)) && isIntegerLike!(Rhs))
     {
-        auto ret = CommonRational!(Int, Rhs)(this.num, this.denom);
+        auto ret = CommonRational!(Int, Rhs)(this.numerator, this.denominator);
         return ret /= rhs;
     }
 
     typeof(this) opBinaryRight(string op, Rhs)(Rhs rhs)
         if (op == "/" && is(CommonRational!(Int, Rhs)) && isIntegerLike!Rhs)
     {
-        auto ret = CommonRational!(Int, Rhs)(this.denom, this.num);
+        auto ret = CommonRational!(Int, Rhs)(this.denominator, this.numerator);
         return ret *= rhs;
     }
 
     typeof(this) opOpAssign(string op, Rhs)(Rhs rhs)
         if (op == "/" && isIntegerLike!Rhs)
     {
-        auto divisor = gcf(this.numerator, rhs);
-        this.numerator /= divisor;
+        auto divisor = gcf(this.num, rhs);
+        this.num /= divisor;
         rhs /= divisor;
-        this.denominator *= rhs;
+        this.den *= rhs;
 
         /* Don't need to simplify.  Already cancelled common factors before
          * multiplying.
@@ -341,7 +341,7 @@ struct Rational(Int)
         if (op == "/" && isRational!Rhs)
     {
         // Division = multiply by inverse.
-        swap(rhs.numerator, rhs.denominator);
+        swap(rhs.num, rhs.den);
         return this *= rhs;
     }
 
@@ -349,7 +349,7 @@ struct Rational(Int)
     auto opBinary(string op, Rhs)(Rhs rhs)
         if (op == "+" && (isRational!Rhs || isIntegerLike!Rhs))
     {
-        auto ret = CommonRational!(typeof(this), Rhs)(this.num, this.denom);
+        auto ret = CommonRational!(typeof(this), Rhs)(this.numerator, this.denominator);
         return ret += rhs;
     }
 
@@ -362,17 +362,17 @@ struct Rational(Int)
     typeof(this) opOpAssign(string op, Rhs)(Rhs rhs)
         if (op == "+" && isRational!Rhs)
     {
-        if (this.denominator == rhs.denominator)
+        if (this.den == rhs.den)
         {
-            this.numerator += rhs.numerator;
+            this.num += rhs.num;
             simplify();
             return this;
         }
 
-        Int commonDenom = lcm(this.denominator, rhs.denominator);
-        this.numerator *= commonDenom / this.denominator;
-        this.numerator += (commonDenom / rhs.denominator) * rhs.numerator;
-        this.denominator = commonDenom;
+        Int commonDenom = lcm(this.den, rhs.den);
+        this.num *= commonDenom / this.den;
+        this.num += (commonDenom / rhs.den) * rhs.num;
+        this.den = commonDenom;
 
         simplify();
         return this;
@@ -381,7 +381,7 @@ struct Rational(Int)
     typeof(this) opOpAssign(string op, Rhs)(Rhs rhs)
         if (op == "+" && isIntegerLike!Rhs)
     {
-        this.numerator += rhs * this.denominator;
+        this.num += rhs * this.den;
 
         simplify();
         return this;
@@ -391,24 +391,24 @@ struct Rational(Int)
     auto opBinary(string op, Rhs)(Rhs rhs)
         if (op == "-" && is(CommonRational!(Int, Rhs)))
     {
-        auto ret = CommonRational!(typeof(this), Rhs)(this.num, this.denom);
+        auto ret = CommonRational!(typeof(this), Rhs)(this.numerator, this.denominator);
         return ret -= rhs;
     }
 
     typeof(this) opOpAssign(string op, Rhs)(Rhs rhs)
         if (op == "-" && isRational!Rhs)
     {
-        if (this.denominator == rhs.denominator)
+        if (this.den == rhs.den)
         {
-            this.numerator -= rhs.numerator;
+            this.num -= rhs.num;
             simplify();
             return this;
         }
 
-        auto commonDenom = lcm(this.denominator, rhs.denominator);
-        this.numerator *= commonDenom / this.denominator;
-        this.numerator -= (commonDenom / rhs.denominator) * rhs.numerator;
-        this.denominator = commonDenom;
+        auto commonDenom = lcm(this.den, rhs.den);
+        this.num *= commonDenom / this.den;
+        this.num -= (commonDenom / rhs.den) * rhs.num;
+        this.den = commonDenom;
 
         simplify();
         return this;
@@ -417,7 +417,7 @@ struct Rational(Int)
     typeof(this) opOpAssign(string op, Rhs)(Rhs rhs)
         if (op == "-" && isIntegerLike!Rhs)
     {
-        this.numerator -= rhs * this.denominator;
+        this.num -= rhs * this.den;
 
         simplify();
         return this;
@@ -427,8 +427,8 @@ struct Rational(Int)
         if (op == "-" && is(CommonInteger!(Int, Rhs)) && isIntegerLike!Rhs)
     {
         typeof(this) ret;
-        ret.denominator = this.denominator;
-        ret.numerator = (rhs * this.denominator) - this.numerator;
+        ret.den = this.den;
+        ret.num = (rhs * this.den) - this.num;
 
         simplify();
         return ret;
@@ -438,7 +438,7 @@ struct Rational(Int)
     typeof(this) opUnary(string op)()
         if (op == "-" || op == "+")
     {
-        mixin("return typeof(this)(" ~ op ~ "numerator, denominator);");
+        mixin("return typeof(this)(" ~ op ~ "num, den);");
     }
 
     // ---------------------Exponentiation operator---------------------------------
@@ -456,15 +456,15 @@ struct Rational(Int)
          * the numerator and denominator don't have any common factors.  Raising
          * both to a positive integer power won't create any.
          */
-         numerator ^^= rhs;
-         denominator ^^= rhs;
+         num ^^= rhs;
+         den ^^= rhs;
          return this;
     }
 
     auto opBinary(string op, Rhs)(Rhs rhs)
         if (op == "^^" && isIntegerLike!Rhs && is(CommonRational!(Int, Rhs)))
     {
-        auto ret = CommonRational!(Int, Rhs)(this.num, this.denom);
+        auto ret = CommonRational!(Int, Rhs)(this.numerator, this.denominator);
         ret ^^= rhs;
         return ret;
     }
@@ -473,16 +473,16 @@ struct Rational(Int)
     typeof(this) opAssign(Rhs)(Rhs rhs)
         if (isIntegerLike!Rhs && isAssignable!(Int, Rhs))
     {
-        this.numerator = rhs;
-        this.denominator = 1;
+        this.num = rhs;
+        this.den = 1;
         return this;
     }
 
     typeof(this) opAssign(Rhs)(Rhs rhs)
-        if (isRational!Rhs && isAssignable!(Int, typeof(Rhs.num)))
+        if (isRational!Rhs && isAssignable!(Int, typeof(Rhs.numerator)))
     {
-        this.numerator = rhs.num;
-        this.denominator = rhs.denom;
+        this.num = rhs.numerator;
+        this.den = rhs.denominator;
         return this;
     }
 
@@ -492,13 +492,13 @@ struct Rational(Int)
     {
         static if (isRational!Rhs)
         {
-            return rhs.numerator == this.numerator
-                && rhs.denominator == this.denominator;
+            return rhs.num == this.num
+                && rhs.den == this.den;
         }
         else
         {
             static assert(isIntegerLike!Rhs);
-            return rhs == this.numerator && this.denominator == 1;
+            return rhs == this.num && this.den == 1;
         }
     }
 
@@ -515,30 +515,30 @@ struct Rational(Int)
 
         // Assumption:  When simplify() is called, rational will be written in
         // canonical form, with any negative signs being only in the numerator.
-        if (this.numerator < 0 && rhs.numerator > 0)
+        if (this.num < 0 && rhs.num > 0)
         {
             return -1;
         }
-        else if (this.numerator > 0 && rhs.numerator < 0)
+        else if (this.num > 0 && rhs.num < 0)
         {
             return 1;
         }
-        else if (this.numerator >= rhs.numerator &&
-                 this.denominator <= rhs.denominator)
+        else if (this.num >= rhs.num &&
+                 this.den <= rhs.den)
         {
             // We've already ruled out equality, so this must be > rhs.
             return 1;
         }
-        else if (rhs.numerator >= this.numerator &&
-                 rhs.denominator <= this.denominator)
+        else if (rhs.num >= this.num &&
+                 rhs.den <= this.den)
         {
             return -1;
         }
 
         // Can't do it without common denominator.  Argh.
-        auto commonDenom = lcm(this.denominator, rhs.denominator);
-        auto lhsNum = this.numerator * (commonDenom / this.denominator);
-        auto rhsNum = rhs.numerator * (commonDenom / rhs.denominator);
+        auto commonDenom = lcm(this.den, rhs.den);
+        auto lhsNum = this.num * (commonDenom / this.den);
+        auto rhsNum = rhs.num * (commonDenom / rhs.den);
 
         if (lhsNum > rhsNum)
         {
@@ -563,17 +563,17 @@ struct Rational(Int)
         }
 
         // Again, check the obvious cases first.
-        if (rhs >= this.numerator)
+        if (rhs >= this.num)
         {
             return -1;
         }
 
-        rhs *= this.denominator;
-        if (rhs > this.numerator)
+        rhs *= this.den;
+        if (rhs > this.num)
         {
             return -1;
         }
-        else if (rhs < this.numerator)
+        else if (rhs < this.num)
         {
             return 1;
         }
@@ -587,7 +587,7 @@ struct Rational(Int)
     ///Fast inversion, equivalent to 1 / rational.
     typeof(this) invert()
     {
-        swap(numerator, denominator);
+        swap(num, den);
         return this;
     }
 
@@ -598,7 +598,7 @@ struct Rational(Int)
         // Do everything in real precision, then convert to F at the end.
         static if (isIntegral!(Int))
         {
-            return cast(real) numerator / denominator;
+            return cast(real) num / den;
         }
         else
         {
@@ -606,34 +606,34 @@ struct Rational(Int)
             real expon = 1.0;
             real ans = 0;
             byte sign = 1;
-            if (temp.numerator < 0)
+            if (temp.num < 0)
             {
-                temp.numerator *= -1;
+                temp.num *= -1;
                 sign = -1;
             }
 
-            while (temp.numerator > 0)
+            while (temp.num > 0)
             {
-                while (temp.numerator < temp.denominator)
+                while (temp.num < temp.den)
                 {
 
-                    assert(temp.denominator > 0);
+                    assert(temp.den > 0);
 
-                    static if (is(typeof(temp.denominator & 1)))
+                    static if (is(typeof(temp.den & 1)))
                     {
                         // Try to make numbers smaller instead of bigger.
-                        if ((temp.denominator & 1) == 0)
+                        if ((temp.den & 1) == 0)
                         {
-                            temp.denominator >>= 1;
+                            temp.den >>= 1;
                         }
                         else
                         {
-                            temp.numerator <<= 1;
+                            temp.num <<= 1;
                         }
                     }
                     else
                     {
-                        temp.numerator <<= 1;
+                        temp.num <<= 1;
                     }
 
                     expon *= 0.5;
@@ -641,13 +641,13 @@ struct Rational(Int)
                     /* This checks for overflow in case we're working with a
                      * user-defined fixed-precision integer.
                      */
-                    enforce(temp.numerator > 0, text(
+                    enforce(temp.num > 0, text(
                         "Overflow while converting ", typeof(this).stringof,
                         " to ", F.stringof, "."));
 
                 }
 
-                auto intPart = temp.numerator / temp.denominator;
+                auto intPart = temp.num / temp.den;
 
                 static if (is(Int == std.bigint.BigInt))
                 {
@@ -670,7 +670,7 @@ struct Rational(Int)
                 }
 
                 // Subtract out int part.
-                temp.numerator -= intPart * temp.denominator;
+                temp.num -= intPart * temp.den;
             }
 
             return ans * sign;
@@ -688,21 +688,21 @@ struct Rational(Int)
     }
 
     ///Returns the numerator.
-    @property Int num()
+    @property Int numerator()
     {
-        return numerator;
+        return num;
     }
 
     ///Returns the denominator.
-    @property Int denom()
+    @property Int denominator()
     {
-        return denominator;
+        return den;
     }
 
     /// Returns the integer part of this rational, with any remainder truncated.
     @property Int integerPart()
     {
-        return num / denom;
+        return this.numerator / this.denominator;
     }
 
     /// Returns the fractional part of this rational.
@@ -713,37 +713,37 @@ struct Rational(Int)
 
     /**
      * Returns a string representation of $(D this) in the form
-     * this.num / this.denom.
+     * this.numerator / this.denominator.
      */
     string toString()
     {
         static if (is(Int == std.bigint.BigInt))
         {
             // Special case it for now.  This should be fixed later.
-            return toDecimalString(numerator) ~ " / " ~
-                toDecimalString(denominator);
+            return toDecimalString(num) ~ " / " ~
+                toDecimalString(den);
         }
         else
         {
-            return to!string(numerator) ~ " / " ~ to!string(denominator);
+            return to!string(num) ~ " / " ~ to!string(den);
         }
     }
 
 private :
-    Int numerator;
-    Int denominator;
+    Int num;
+    Int den;
 
     void simplify()
     {
-        if (numerator == 0)
+        if (num == 0)
         {
-            denominator = 1;
+            den = 1;
             return;
         }
 
-        auto divisor = gcf(numerator, denominator);
-        numerator /= divisor;
-        denominator /= divisor;
+        auto divisor = gcf(num, den);
+        num /= divisor;
+        den /= divisor;
 
         fixSigns();
     }
@@ -754,10 +754,10 @@ private :
                    !is(Int == ushort) && !is(Int == ubyte))
         {
             // Write in canonical form w.r.t. signs.
-            if (denominator < 0)
+            if (den < 0)
             {
-                denominator *= -1;
-                numerator *= -1;
+                den *= -1;
+                num *= -1;
             }
         }
     }
@@ -857,8 +857,8 @@ unittest
     auto zero = rational(0, 8);
     assert(zero == 0);
     assert(zero == rational(0, 16));
-    assert(zero.num == 0);
-    assert(zero.denom == 1);
+    assert(zero.numerator == 0);
+    assert(zero.denominator == 1);
     auto one = zero + 1;
     one -= one;
     assert(one == zero);
@@ -905,8 +905,8 @@ Rational!(Int) toRational(Int)(real floatNum, real epsilon = 1e-8)
     if (abs(floatNum) < epsilon)
     {
         Rational!Int ret;
-        ret.numerator = 0;
-        ret.denominator = 1;
+        ret.num = 0;
+        ret.den = 1;
         return ret;
     }
 
@@ -926,13 +926,13 @@ private Rational!Int toRationalImpl(Int)(real floatNum, real epsilon)
 
         static if (isIntegral!(Int))
         {
-            ret.denominator = cast(Int) intPart;
-            ret.numerator = cast(Int) 1;
+            ret.den = cast(Int) intPart;
+            ret.num = cast(Int) 1;
         }
         else
         {
-            ret.denominator = intPart;
-            ret.numerator = 1;
+            ret.den = intPart;
+            ret.num = 1;
         }
     }
     else
@@ -942,13 +942,13 @@ private Rational!Int toRationalImpl(Int)(real floatNum, real epsilon)
 
         static if (isIntegral!(Int))
         {
-            ret.denominator = cast(Int) 1;
-            ret.numerator = cast(Int) intPart;
+            ret.den = cast(Int) 1;
+            ret.num = cast(Int) intPart;
         }
         else
         {
-            ret.denominator = 1;
-            ret.numerator = intPart;
+            ret.den = 1;
+            ret.num = intPart;
         }
     }
 
@@ -1020,36 +1020,36 @@ unittest
     assert(gcf(BigInt("8589934596"), BigInt("295147905179352825852")) == 12);
 }
 
-/// Find the least common multiple of num1, num2.
-CommonInteger!(I1, I2) lcm(I1, I2)(I1 num1, I2 num2)
+/// Find the least common multiple of n1, n2.
+CommonInteger!(I1, I2) lcm(I1, I2)(I1 n1, I2 n2)
     if (isIntegerLike!I1 && isIntegerLike!I2)
 {
-    num1 = iAbs(num1);
-    num2 = iAbs(num2);
-    if (num1 == num2)
+    n1 = iAbs(n1);
+    n2 = iAbs(n2);
+    if (n1 == n2)
     {
-        return num1;
+        return n1;
     }
-    return (num1 / gcf(num1, num2)) * num2;
+    return (n1 / gcf(n1, n2)) * n2;
 }
 
 /**
  * Absolute value function that should gracefully handle any reasonable
  * BigInt implementation.
  */
-Int iAbs(Int)(Int num1)
+Int iAbs(Int)(Int n)
     if (isIntegerLike!Int)
 {
     static if (isUnsigned!Int)
     {
-        return num1;
+        return n;
     }
     else
     {
         /* For some reason DMD insists that a byte multipled by -1 is an int
          * not a byte.
          */
-        return cast(Int) ((num1 < 0) ? -1 * num1 : num1);
+        return cast(Int) ((n < 0) ? -1 * n : n);
     }
 }
 
