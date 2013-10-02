@@ -7,7 +7,7 @@
  * Synopsis:
  * ---
  * // Compute pi using the generalized continued fraction approximation.
- * import std.bigint;
+ * import std.bigint, std.rational, std.stdio;
  *
  * enum maxTerm = 30;
  *
@@ -168,21 +168,29 @@ unittest
  * have value semantics, and the semantics of all integer operations must follow
  * the normal rules of integer arithmetic.
  *
+ * A regular integer can be converted to rational type simply by passing it as
+ * a single argument.  In this case the denominator will simply be set to 1.
+ *
  * Examples:
  * ---
- * auto r1 = rational( BigInt("314159265"), BigInt("27182818"));
- * auto r2 = rational( BigInt("8675309"), BigInt("362436"));
+ * auto r1 = rational(BigInt("314159265"), BigInt("27182818"));
+ * auto r2 = rational(BigInt("8675309"), BigInt("362436"));
  * r1 += r2;
- * assert(r1 == rational( BigInt("174840986505151"),
- *     BigInt("4926015912324")));
+ * assert(r1 == rational(BigInt("174840986505151"),
+ *                       BigInt("4926015912324")));
  *
  * // Print result.  Prints:
  * // "174840986505151 / 4926015912324"
- * writeln(f1);
+ * writeln(r1);
  *
  * // Print result in decimal form.  Prints:
  * // "35.4934"
- * writeln(cast(real) result);
+ * writeln(cast(real) r1);
+ *
+ * auto r3 = rational(10);
+ * assert(r3.numerator == 10);
+ * assert(r3.denominator == 1);
+ * assert(r3 == 10);
  * ---
  */
 Rational!(CommonInteger!(I1, I2)) rational(I1, I2)(I1 i1, I2 i2)
@@ -206,7 +214,7 @@ Rational!(CommonInteger!(I1, I2)) rational(I1, I2)(I1 i1, I2 i2)
     return ret;
 }
 
-///Overload for creating a rational that initially has an integer value.
+///Ditto
 Rational!(I) rational(I)(I val)
     if (isIntegerLike!I)
 {
