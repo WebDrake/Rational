@@ -52,28 +52,28 @@ import std.algorithm, std.stdio, std.bigint, std.conv, std.math, std.exception,
 alias std.math.abs abs;  // Allow cross-module overloading.
 
 /**
-Checks whether $(D T) is structurally an integer, i.e. whether it supports
-all of the operations an integer type should support.  Does not check the
-nominal type of $(D T).  In particular, the following must compile:
-
----
-T n;
-n = 2;
-n <<= 1;
-n >>= 1;
-n += n;
-n *= n;
-n /= n;
-n -= n;
-n %= 2;
-n %= n;
-bool foo = n < 2;
-bool bar = n == 2;
----
-
-All builtin D integers and $(D std.bigint.BigInt) are integer-like by this
-definition.
-*/
+ * Checks whether $(D T) is structurally an integer, i.e. whether it supports
+ * all of the operations an integer type should support.  Does not check the
+ * nominal type of $(D T).  In particular, the following must compile:
+ *
+ * ---
+ * T n;
+ * n = 2;
+ * n <<= 1;
+ * n >>= 1;
+ * n += n;
+ * n *= n;
+ * n /= n;
+ * n -= n;
+ * n %= 2;
+ * n %= n;
+ * bool foo = n < 2;
+ * bool bar = n == 2;
+ * ---
+ *
+ * All builtin D integers and $(D std.bigint.BigInt) are integer-like by this
+ * definition.
+ */
 template isIntegerLike(T)
 {
     static if (is(T == const) || is(T == immutable))
@@ -146,8 +146,8 @@ template CommonRational(R1, R2)
 }
 
 /**
-Returns a common integral type between $(D I1) and $(D I2).  This is defined
-as the type returned by I1.init * I2.init.
+ * Returns a common integral type between $(D I1) and $(D I2).  This is defined
+ * as the type returned by I1.init * I2.init.
  */
 template CommonInteger(I1, I2)
     if (isIntegerLike!I1 && isIntegerLike!I2)
@@ -162,28 +162,28 @@ unittest
 }
 
 /**
-Implements rational numbers on top of whatever integer type is specified
-by the user.  The integer type used may be any type that behaves as an integer.
-Specifically, $(D isIntegerLike) must return true, the integer type must
-have value semantics, and the semantics of all integer operations must follow
-the normal rules of integer arithmetic.
-
-Examples:
----
-auto r1 = rational( BigInt("314159265"), BigInt("27182818"));
-auto r2 = rational( BigInt("8675309"), BigInt("362436"));
-r1 += r2;
-assert(r1 == rational( BigInt("174840986505151"),
-    BigInt("4926015912324")));
-
-// Print result.  Prints:
-// "174840986505151 / 4926015912324"
-writeln(f1);
-
-// Print result in decimal form.  Prints:
-// "35.4934"
-writeln(cast(real) result);
----
+ * Implements rational numbers on top of whatever integer type is specified
+ * by the user.  The integer type used may be any type that behaves as an integer.
+ * Specifically, $(D isIntegerLike) must return true, the integer type must
+ * have value semantics, and the semantics of all integer operations must follow
+ * the normal rules of integer arithmetic.
+ *
+ * Examples:
+ * ---
+ * auto r1 = rational( BigInt("314159265"), BigInt("27182818"));
+ * auto r2 = rational( BigInt("8675309"), BigInt("362436"));
+ * r1 += r2;
+ * assert(r1 == rational( BigInt("174840986505151"),
+ *     BigInt("4926015912324")));
+ *
+ * // Print result.  Prints:
+ * // "174840986505151 / 4926015912324"
+ * writeln(f1);
+ *
+ * // Print result in decimal form.  Prints:
+ * // "35.4934"
+ * writeln(cast(real) result);
+ * ---
  */
 Rational!(CommonInteger!(I1, I2)) rational(I1, I2)(I1 i1, I2 i2)
     if (isIntegerLike!I1 && isIntegerLike!I2)
@@ -195,8 +195,9 @@ Rational!(CommonInteger!(I1, I2)) rational(I1, I2)(I1 i1, I2 i2)
     }
     else
     {
-        // Don't want to use void initialization b/c BigInts probably use
-        // assignment operator, copy c'tor, etc.
+        /* Don't want to use void initialization b/c BigInts probably use
+         * assignment operator, copy c'tor, etc.
+         */
         typeof(return) ret;
         ret.num = i1;
         ret.den = i2;
@@ -205,7 +206,7 @@ Rational!(CommonInteger!(I1, I2)) rational(I1, I2)(I1 i1, I2 i2)
     return ret;
 }
 
-/**Overload for creating a rational that initially has an integer value.*/
+///Overload for creating a rational that initially has an integer value.
 Rational!(I) rational(I)(I val)
     if (isIntegerLike!I)
 {
@@ -213,11 +214,11 @@ Rational!(I) rational(I)(I val)
 }
 
 /**
-The struct that implements rational numbers.  All relevant operators
-(addition, subtraction, multiplication, division, exponentiation by a
- non-negative integer, equality and comparison) are overloaded.  The second
- operand for all binary operators except exponentiation may be either another
- $(D Rational) or another integer type.
+ * The struct that implements rational numbers.  All relevant operators
+ * (addition, subtraction, multiplication, division, exponentiation by a
+ * non-negative integer, equality and comparison) are overloaded.  The second
+ * operand for all binary operators except exponentiation may be either another
+ * $(D Rational) or another integer type.
  */
 struct Rational(Int)
     if (isIntegerLike!Int)
@@ -494,11 +495,12 @@ struct Rational(Int)
             return 0;
         }
 
-        // Check a few obvious cases first, see if we can avoid having to use a
-        // common denominator.  These are basically speed hacks.
-
-        // Assumption:  When simplify() is called, rational will be written in
-        // canonical form, with any negative signs being only in the numerator.
+        /* Check a few obvious cases first, see if we can avoid having to use a
+         * common denominator.  These are basically speed hacks.
+         *
+         * Assumption:  When simplify() is called, rational will be written in
+         * canonical form, with any negative signs being only in the numerator.
+         */
         if (this.num < 0 && rhs.num > 0)
         {
             return -1;
@@ -533,8 +535,9 @@ struct Rational(Int)
             return -1;
         }
 
-        // We've checked for equality already.  If we get to this point,
-        // there's clearly something wrong.
+        /* We've checked for equality already.  If we get to this point,
+         * there's clearly something wrong.
+         */
         assert(0);
     }
 
@@ -662,8 +665,8 @@ struct Rational(Int)
     }
 
     /**
-    Casts $(D this) to an integer by truncating the fractional part.
-    Equivalent to $(D integerPart), and then casting it to type $(D I).
+     * Casts $(D this) to an integer by truncating the fractional part.
+     * Equivalent to $(D integerPart), and then casting it to type $(D I).
      */
     I opCast(I)()
         if (isIntegerLike!I && is(typeof(cast(I) Int.init)))
@@ -857,10 +860,13 @@ unittest
     assert(cast(long) intFract == 1);
 
     // Test whether CTFE works for primitive types.  Doesn't work yet.
-    /*enum myRational = (((rational(1, 2) + rational(1, 4)) * 2 - rational(1, 4))
-        / 2 + 1 * rational(1, 2) - 1) / rational(2, 5);
-    writeln(myRational);
-    static assert(myRational == rational(-15, 32));*/
+    version(none)
+    {
+        enum myRational = (((rational(1, 2) + rational(1, 4)) * 2 - rational(1, 4))
+                           / 2 + 1 * rational(1, 2) - 1) / rational(2, 5);
+        writeln(myRational);
+        static assert(myRational == rational(-15, 32));
+    }
 }
 
 /**
@@ -887,8 +893,9 @@ Rational!(Int) toRational(Int)(real floatNum, real epsilon = 1e-8)
     enforce(1.0L / epsilon < long.max,
             "Can't handle very small epsilons < long.max in toRational.");
 
-    // Handle this as a special case to make the rest of the code less
-    // complicated:
+    /* Handle this as a special case to make the rest of the code less
+     * complicated:
+     */
     if (abs(floatNum) < epsilon)
     {
         Rational!Int ret;
