@@ -46,8 +46,8 @@
  */
 module std.rational;
 
-import std.algorithm, std.stdio, std.bigint, std.conv, std.math, std.exception,
-       std.conv, std.traits;
+import std.algorithm, std.bigint, std.conv, std.exception, std.math,
+       std.traits;
 
 alias std.math.abs abs;  // Allow cross-module overloading.
 
@@ -864,6 +864,7 @@ unittest
     {
         enum myRational = (((rational(1, 2) + rational(1, 4)) * 2 - rational(1, 4))
                            / 2 + 1 * rational(1, 2) - 1) / rational(2, 5);
+        import std.stdio;
         writeln(myRational);
         static assert(myRational == rational(-15, 32));
     }
