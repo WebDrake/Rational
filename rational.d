@@ -146,36 +146,6 @@ template CommonRational(R1, R2)
 }
 
 /**
-Returns $(D true) iff a value of type $(D U) can be assigned to a variable of
-type $(D T).
-
-Examples:
----
-static assert(isAssignable!(long, int));
-static assert(!isAssignable!(int, long));
-static assert(isAssignable!(const(char)[], string));
-static assert(!isAssignable!(string, char[]));
----
-*/
-template isAssignable(T, U)
-{
-    enum bool isAssignable = is(typeof({
-        T t;
-        U u;
-        t = u;
-        return t;
-    }));
-}
-
-unittest
-{
-    static assert(isAssignable!(long, int));
-    static assert(!isAssignable!(int, long));
-    static assert(isAssignable!(const(char)[], string));
-    static assert(!isAssignable!(string, char[]));
-}
-
-/**
 Returns a common integral type between $(D I1) and $(D I2).  This is defined
 as the type returned by I1.init * I2.init.
  */
