@@ -123,26 +123,14 @@ unittest
     static assert(!isIntegerLike!bool);
 }
 
+/**
+ * Checks if $(D T) has the basic properties of a rational type, i.e.
+ * it has a numerator and a denominator.
+ */
 template isRational(T)
 {
     enum bool isRational =
         is(typeof(T.init.denominator)) && is(typeof(T.init.numerator));
-}
-
-template CommonRational(R1, R2)
-{
-    static if (isRational!R1)
-    {
-        alias CommonRational!(typeof(R1.numerator), R2) CommonRational;
-    }
-    else static if (isRational!R2)
-    {
-        alias CommonRational!(R1, typeof(R2.numerator)) CommonRational;
-    }
-    else static if (is(CommonInteger!(R1, R2)))
-    {
-        alias Rational!(CommonInteger!(R1, R2)) CommonRational;
-    }
 }
 
 /**
@@ -159,6 +147,28 @@ unittest
 {
     static assert(is(CommonInteger!(BigInt, int) == BigInt));
     static assert(is(CommonInteger!(byte, int) == int));
+}
+
+/**
+ * Returns a common rational type between $(D R1) and $(D R2), which
+ * will be a Rational based on the CommonInteger of their underlying
+ * integer types (or just on the CommonInteger of ($D R1) and $(D R2),
+ * if they themselves are integers).
+ */
+template CommonRational(R1, R2)
+{
+    static if (isRational!R1)
+    {
+        alias CommonRational!(typeof(R1.numerator), R2) CommonRational;
+    }
+    else static if (isRational!R2)
+    {
+        alias CommonRational!(R1, typeof(R2.numerator)) CommonRational;
+    }
+    else static if (is(CommonInteger!(R1, R2)))
+    {
+        alias Rational!(CommonInteger!(R1, R2)) CommonRational;
+    }
 }
 
 /**
@@ -984,7 +994,10 @@ unittest
 }
 
 
-/// Find the greatest common factor of m and n using Euclid's Algorithm.
+/**
+ * Find the greatest common factor (aka greatest common divisor)
+ * of m and n.
+ */
 CommonInteger!(I1, I2) gcf(I1, I2)(I1 m, I2 n)
     if (isIntegerLike!I1 && isIntegerLike!I2)
 {
