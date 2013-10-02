@@ -996,8 +996,8 @@ CommonInteger!(I1, I2) gcf(I1, I2)(I1 m, I2 n)
     }
     else
     {
-        typeof(return) a = iAbs(m);
-        typeof(return) b = iAbs(n);
+        typeof(return) a = abs(m);
+        typeof(return) b = abs(n);
 
         while (b)
         {
@@ -1027,33 +1027,13 @@ unittest
 CommonInteger!(I1, I2) lcm(I1, I2)(I1 n1, I2 n2)
     if (isIntegerLike!I1 && isIntegerLike!I2)
 {
-    n1 = iAbs(n1);
-    n2 = iAbs(n2);
+    n1 = abs(n1);
+    n2 = abs(n2);
     if (n1 == n2)
     {
         return n1;
     }
     return (n1 / gcf(n1, n2)) * n2;
-}
-
-/**
- * Absolute value function that should gracefully handle any reasonable
- * BigInt implementation.
- */
-Int iAbs(Int)(Int n)
-    if (isIntegerLike!Int)
-{
-    static if (isUnsigned!Int)
-    {
-        return n;
-    }
-    else
-    {
-        /* For some reason DMD insists that a byte multipled by -1 is an int
-         * not a byte.
-         */
-        return cast(Int) ((n < 0) ? -1 * n : n);
-    }
 }
 
 /// Returns the largest integer less than or equal to $(D r).
