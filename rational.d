@@ -123,13 +123,13 @@ unittest
     static assert(!isIntegerLike!bool);
 }
 
-private template isRational(T)
+template isRational(T)
 {
     enum bool isRational =
         is(typeof(T.init.denominator)) && is(typeof(T.init.numerator));
 }
 
-private template CommonRational(R1, R2)
+template CommonRational(R1, R2)
 {
     static if (isRational!R1)
     {
