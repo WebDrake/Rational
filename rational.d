@@ -775,6 +775,9 @@ unittest
     auto f1 = rational(num, den);
     auto f2 = rational(simpNum, simpDen);
     assert(f1 == f2);
+    // Check that signs of numerator/denominator are corrected
+    assert(rational(10, -3).numerator == -10);
+    assert(rational(7, -5).denominator == 5);
 
     // Test multiplication.
     assert((rational(0, 1) * rational(1, 1)) == 0);
