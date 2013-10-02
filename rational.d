@@ -104,9 +104,23 @@ template isIntegerLike(T)
 unittest
 {
     static assert(isIntegerLike!BigInt);
+    static assert(isIntegerLike!long);
+    static assert(isIntegerLike!ulong);
     static assert(isIntegerLike!int);
+    static assert(isIntegerLike!uint);
+    static assert(isIntegerLike!short);
+    static assert(isIntegerLike!ushort);
     static assert(isIntegerLike!byte);
+    static assert(isIntegerLike!ubyte);
+
+    static assert(isIntegerLike!char);
+    static assert(isIntegerLike!wchar);
+    static assert(isIntegerLike!dchar);
+
     static assert(!isIntegerLike!real);
+    static assert(!isIntegerLike!double);
+    static assert(!isIntegerLike!float);
+    static assert(!isIntegerLike!bool);
 }
 
 private template isRational(T)
