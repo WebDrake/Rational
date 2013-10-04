@@ -190,7 +190,7 @@ template CommonRational(R1, R2)
  *                       BigInt("4926015912324")));
  *
  * // Print result.  Prints:
- * // "174840986505151 / 4926015912324"
+ * // "174840986505151/4926015912324"
  * writeln(r1);
  *
  * // Print result in decimal form.  Prints:
@@ -716,21 +716,18 @@ struct Rational(Int)
         return this - integerPart;
     }
 
-    /**
-     * Returns a string representation of $(D this) in the form
-     * this.numerator / this.denominator.
-     */
+    /// Returns a string representation of $(D this) in the form a/b.
     string toString()
     {
         static if (is(Int == std.bigint.BigInt))
         {
             // Special case it for now.  This should be fixed later.
-            return toDecimalString(num) ~ " / " ~
+            return toDecimalString(num) ~ "/" ~
                 toDecimalString(den);
         }
         else
         {
-            return to!string(num) ~ " / " ~ to!string(den);
+            return to!string(num) ~ "/" ~ to!string(den);
         }
     }
 
@@ -899,7 +896,7 @@ unittest
  *
  * Examples:
  * ---
- * // Prints "22 / 7".
+ * // Prints "22/7".
  * writeln(toRational!int(PI, 1e-1));
  * ---
  */
