@@ -42,7 +42,7 @@
  *
  * Author:  David Simcha
  * Copyright:  Copyright (c) 2009-2011, David Simcha.
- * License:    $(WEB boost.org/LICENSE_1_0.txt, Boost License 1.0)
+ * License:    $(LINK2 http://www.boost.org/LICENSE_1_0.txt, Boost License 1.0)
  */
 module std.rational;
 
