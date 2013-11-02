@@ -54,10 +54,11 @@ alias std.math.abs abs;  // Allow cross-module overloading.
 /**
  * Checks whether $(D T) is structurally an integer, i.e. whether it supports
  * all of the operations an integer type should support.  Does not check the
- * nominal type of $(D T).  In particular, the following must compile:
+ * nominal type of $(D T).  In particular, for a mutable type $(D T) the
+ * following must compile:
  *
  * ---
- * T n;     // Unqual!T if T is not mutable
+ * T n;
  * n = 2;
  * n <<= 1;
  * n >>= 1;
@@ -77,7 +78,10 @@ alias std.math.abs abs;  // Allow cross-module overloading.
  * bool tar = n == n;
  * ---
  *
- * All built-in D integers and character types and $(D std.bigint.BigInt) are
+ * while for a non-mutable type, the above must compile for its unqualified,
+ * mutable variant.
+ *
+ * All built-in D integers and character types and $(XREF bigint, BigInt) are
  * integer-like by this definition.
  */
 template isIntegerLike(T)
@@ -87,6 +91,7 @@ template isIntegerLike(T)
         enum bool isIntegerLike = is(typeof({
             T n;
             n = 2;
+            n = n;
             n <<= 1;
             n >>= 1;
             n += n;
@@ -115,25 +120,22 @@ template isIntegerLike(T)
 
 unittest
 {
-    import std.bigint;
-    static assert(isIntegerLike!BigInt);
-    static assert(isIntegerLike!long);
-    static assert(isIntegerLike!ulong);
-    static assert(isIntegerLike!int);
-    static assert(isIntegerLike!uint);
-    static assert(isIntegerLike!short);
-    static assert(isIntegerLike!ushort);
-    static assert(isIntegerLike!byte);
-    static assert(isIntegerLike!ubyte);
+    import std.typetuple;
+    foreach (T; TypeTuple!(BigInt, long, ulong, int, uint,
+                          short, ushort, byte, ubyte,
+                          char, wchar, dchar))
+    {
+        static assert(isIntegerLike!T);
+        static assert(isIntegerLike!(const(T)));
+        static assert(isIntegerLike!(immutable(T)));
+    }
 
-    static assert(isIntegerLike!char);
-    static assert(isIntegerLike!wchar);
-    static assert(isIntegerLike!dchar);
-
-    static assert(!isIntegerLike!real);
-    static assert(!isIntegerLike!double);
-    static assert(!isIntegerLike!float);
-    static assert(!isIntegerLike!bool);
+    foreach (T; TypeTuple!(real, double, float, bool))
+    {
+        static assert(!isIntegerLike!T);
+        static assert(!isIntegerLike!(const(T)));
+        static assert(!isIntegerLike!(immutable(T)));
+    }
 }
 
 /**
